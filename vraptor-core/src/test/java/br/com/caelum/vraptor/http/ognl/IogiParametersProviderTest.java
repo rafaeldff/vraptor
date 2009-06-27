@@ -41,33 +41,24 @@ import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 
-import ognl.OgnlException;
-
-import org.hamcrest.Matcher;
 import org.jmock.Expectations;
+import org.jmock.Sequence;
 import org.junit.Before;
 import org.junit.Test;
 
 import br.com.caelum.vraptor.converter.LongConverter;
 import br.com.caelum.vraptor.core.Converters;
 import br.com.caelum.vraptor.http.ParameterNameProvider;
-import br.com.caelum.vraptor.http.TypeCreator;
-import br.com.caelum.vraptor.interceptor.VRaptorMatchers;
 import br.com.caelum.vraptor.ioc.Container;
-import br.com.caelum.vraptor.resource.ResourceMethod;
 import br.com.caelum.vraptor.test.VRaptorMockery;
 import br.com.caelum.vraptor.validator.Message;
 
-public class OgnlParametersProviderTest {
-
+public class IogiParametersProviderTest {
     private VRaptorMockery mockery;
     private Converters converters;
-    private OgnlParametersProvider provider;
-    private TypeCreator creator;
-    private Container container;
+    private IogiParametersProvider provider;
     private ParameterNameProvider nameProvider;
     private HttpServletRequest parameters;
-    private EmptyElementsRemoval removal;
     private ArrayList<Message> errors;
 
     @SuppressWarnings("unchecked")
@@ -76,11 +67,8 @@ public class OgnlParametersProviderTest {
         this.mockery = new VRaptorMockery();
         this.converters = mockery.mock(Converters.class);
         this.parameters = mockery.mock(HttpServletRequest.class);
-        this.creator = mockery.mock(TypeCreator.class);
         this.nameProvider = mockery.mock(ParameterNameProvider.class);
-        this.container = mockery.mock(Container.class);
-        this.removal = new EmptyElementsRemoval();
-        this.provider = new OgnlParametersProvider(creator, container, converters, nameProvider, parameters, removal);
+        this.provider = new IogiParametersProvider(nameProvider, parameters);
         this.errors = new ArrayList<Message>();
         mockery.checking(new Expectations() {
             {
@@ -163,22 +151,20 @@ public class OgnlParametersProviderTest {
     }
 
     @Test
-    public void isCapableOfDealingWithEmptyParameterForInternalWrapperValue() throws OgnlException,
-            NoSuchMethodException {
+    public void isCapableOfDealingWithEmptyParameterForInternalWrapperValue() throws Exception {
         final Method method = MyResource.class.getDeclaredMethod("buyA", House.class);
-        final Matcher<ResourceMethod> resourceMethod = VRaptorMatchers.resourceMethod(method);
-        mockery.checking(new Expectations() {
-            {
-                one(parameters).getParameterValues("house.cat.id");
-                will(returnValue(new String[]{"guilherme"}));
-                one(parameters).getParameterNames();
-                will(returnValue(enumFor("house.cat.id")));
-                one(creator).typeFor(with(resourceMethod));
-                will(returnValue(BuyASetter.class));
-                one(nameProvider).parameterNamesFor(method);
-                will(returnValue(new String[]{"House"}));
-            }
-        });
+        
+        final Sequence nameProviderSequence = mockery.sequence("parameterNameProviderSequence");
+        mockery.checking(new Expectations() {{
+            one(parameters).getParameterValues("house.cat.id");
+            will(returnValue(new String[]{"guilherme"}));
+            one(parameters).getParameterNames();
+            will(returnValue(enumFor("house.cat.id")));
+            
+            one(nameProvider).parameterNamesFor(method); 
+            inSequence(nameProviderSequence); 
+            will(returnValue(new String[]{"house"})); 
+        }});
 
         Object[] params = provider.getParametersFor(mockery.methodFor(MyResource.class, "buyA", House.class), errors,
                 null);
@@ -188,22 +174,16 @@ public class OgnlParametersProviderTest {
     }
 
     @Test
-    public void removeFromTheCollectionIfAnElementIsCreatedWithinACollectionButNoFieldIsSet() throws SecurityException,
-            NoSuchMethodException {
+    public void removeFromTheCollectionIfAnElementIsCreatedWithinACollectionButNoFieldIsSet() throws Exception {
         final Method method = MyResource.class.getDeclaredMethod("buyA", House.class);
-        final Matcher<ResourceMethod> resourceMethod = VRaptorMatchers.resourceMethod(method);
         mockery.checking(new Expectations() {
             {
                 one(parameters).getParameterValues("house.extraCats[1].id");
                 will(returnValue(new String[]{"guilherme"}));
                 one(parameters).getParameterNames();
                 will(returnValue(enumFor("house.extraCats[1].id")));
-                one(creator).typeFor(with(resourceMethod));
-                will(returnValue(BuyASetter.class));
                 one(nameProvider).parameterNamesFor(method);
-                will(returnValue(new String[]{"House"}));
-                allowing(container).instanceFor(EmptyElementsRemoval.class);
-                will(returnValue(removal));
+                will(returnValue(new String[]{"house"}));
             }
         });
         Object[] params = provider.getParametersFor(mockery.methodFor(MyResource.class, "buyA", House.class), errors, null);
@@ -222,19 +202,14 @@ public class OgnlParametersProviderTest {
     public void removeFromTheCollectionIfAnElementIsCreatedWithinAnArrayButNoFieldIsSet() throws SecurityException,
             NoSuchMethodException {
         final Method method = MyResource.class.getDeclaredMethod("buyA", House.class);
-        final Matcher<ResourceMethod> resourceMethod = VRaptorMatchers.resourceMethod(method);
         mockery.checking(new Expectations() {
             {
                 one(parameters).getParameterValues("house.ids[1]");
                 will(returnValue(new String[]{"3"}));
                 one(parameters).getParameterNames();
                 will(returnValue(enumFor("house.ids[1]")));
-                one(creator).typeFor(with(resourceMethod));
-                will(returnValue(BuyASetter.class));
                 one(nameProvider).parameterNamesFor(method);
-                will(returnValue(new String[]{"House"}));
-                one(container).instanceFor(EmptyElementsRemoval.class);
-                will(returnValue(removal));
+                will(returnValue(new String[]{"house"}));
             }
         });
         Object[] params = provider.getParametersFor(mockery.methodFor(MyResource.class, "buyA", House.class), errors,
@@ -249,19 +224,14 @@ public class OgnlParametersProviderTest {
     public void removeFromTheCollectionIfAnElementIsCreatedWithinACollectionButNoFieldIsSetAppartFromTheValueItselfNotAChild()
             throws SecurityException, NoSuchMethodException {
         final Method method = MyResource.class.getDeclaredMethod("buyA", House.class);
-        final Matcher<ResourceMethod> resourceMethod = VRaptorMatchers.resourceMethod(method);
         mockery.checking(new Expectations() {
             {
                 one(parameters).getParameterValues("house.owners[1]");
                 will(returnValue(new String[]{"guilherme"}));
                 one(parameters).getParameterNames();
                 will(returnValue(enumFor("house.owners[1]")));
-                one(creator).typeFor(with(resourceMethod));
-                will(returnValue(BuyASetter.class));
                 one(nameProvider).parameterNamesFor(method);
-                will(returnValue(new String[]{"House"}));
-                one(container).instanceFor(EmptyElementsRemoval.class);
-                will(returnValue(removal));
+                will(returnValue(new String[]{"house"}));
             }
         });
         Object[] params = provider.getParametersFor(mockery.methodFor(MyResource.class, "buyA", House.class), errors,

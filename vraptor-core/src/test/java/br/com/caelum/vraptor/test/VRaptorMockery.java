@@ -11,6 +11,7 @@ import ognl.SimpleNode;
 
 import org.jmock.Expectations;
 import org.jmock.Mockery;
+import org.jmock.Sequence;
 import org.jmock.internal.ExpectationBuilder;
 import org.jmock.lib.legacy.ClassImposteriser;
 
@@ -154,4 +155,7 @@ public class VRaptorMockery {
 		return mockery.mock(type,name);
 	}
 
+	public Sequence sequence(String sequenceName) {
+		return mockery.sequence(sequenceName);
+	}
 }

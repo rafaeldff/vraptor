@@ -29,10 +29,11 @@
  */
 package br.com.caelum.vraptor.ioc.pico;
 
+import org.picocontainer.MutablePicoContainer;
+
 import br.com.caelum.vraptor.http.route.Router;
 import br.com.caelum.vraptor.ioc.Container;
 import br.com.caelum.vraptor.resource.Resource;
-import org.picocontainer.MutablePicoContainer;
 
 /**
  * A pico container based implementation of a component providing container.

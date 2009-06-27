@@ -27,18 +27,19 @@
  */
 package br.com.caelum.vraptor.view;
 
-import br.com.caelum.vraptor.http.route.Router;
-import br.com.caelum.vraptor.proxy.MethodInvocation;
-import br.com.caelum.vraptor.proxy.Proxifier;
-import br.com.caelum.vraptor.proxy.ProxyInvocationException;
-import br.com.caelum.vraptor.proxy.SuperMethod;
+import java.io.IOException;
+import java.lang.reflect.Method;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.lang.reflect.Method;
+
+import br.com.caelum.vraptor.http.route.Router;
+import br.com.caelum.vraptor.proxy.MethodInvocation;
+import br.com.caelum.vraptor.proxy.Proxifier;
+import br.com.caelum.vraptor.proxy.ProxyInvocationException;
+import br.com.caelum.vraptor.proxy.SuperMethod;
 
 /**
  * The default implementation of LogicResult.<br>

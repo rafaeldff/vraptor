@@ -27,18 +27,20 @@
  */
 package br.com.caelum.vraptor.vraptor2;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import javax.servlet.http.HttpServletResponse;
+
+import org.vraptor.annotations.Remotable;
+import org.vraptor.annotations.Viewless;
+import org.vraptor.remote.json.JSONSerializer;
+
 import br.com.caelum.vraptor.InterceptionException;
 import br.com.caelum.vraptor.Interceptor;
 import br.com.caelum.vraptor.core.InterceptorStack;
 import br.com.caelum.vraptor.resource.ResourceMethod;
 import br.com.caelum.vraptor.vraptor2.outject.JsonOutjecter;
-import org.vraptor.annotations.Remotable;
-import org.vraptor.annotations.Viewless;
-import org.vraptor.remote.json.JSONSerializer;
-
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.PrintWriter;
 
 /**
  * VRaptor2 based ajax interceptor.<br>
