@@ -30,15 +30,17 @@ package br.com.caelum.vraptor.http.iogi;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.fail;
 import iogi.Iogi;
 import iogi.parameters.Parameter;
 import iogi.reflection.Target;
+import iogi.spi.LocaleProvider;
 import iogi.util.DefaultLocaleProvider;
 import iogi.util.NullDependencyProvider;
 
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 import ognl.Ognl;
@@ -46,6 +48,7 @@ import ognl.OgnlContext;
 import ognl.OgnlException;
 import ognl.OgnlRuntime;
 
+import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,22 +78,15 @@ public class MiscIogiSupportTest {
     private ResourceBundle bundle;
     
     private Iogi iogi;
+	private LocaleProvider mockLocaleProvider;
 
     @Before
     public void setup() {
         this.mockery = new Mockery();
-        this.converters = mockery.mock(Converters.class);
         this.house = new House();
-        OgnlRuntime.setNullHandler(Object.class, new ReflectionBasedNullHandler());
-        OgnlRuntime.setPropertyAccessor(List.class, new ListAccessor());
-        OgnlRuntime.setPropertyAccessor(Object[].class, new ArrayAccessor());
-        this.context = (OgnlContext) Ognl.createDefaultContext(house);
-        context.setTraceEvaluations(true);
-        // OgnlRuntime.setPropertyAccessor(Set.class, new SetAccessor());
-        // OgnlRuntime.setPropertyAccessor(Map.class, new MapAccessor());
         this.bundle = ResourceBundle.getBundle("messages");
-        Ognl.setTypeConverter(context, new VRaptorConvertersAdapter(converters, bundle));
-        iogi = new Iogi(new NullDependencyProvider(), new DefaultLocaleProvider());
+        this.mockLocaleProvider = mockery.mock(LocaleProvider.class);
+    	this.iogi = new Iogi(new NullDependencyProvider(), mockLocaleProvider);
     }
 
     public static class Cat {
@@ -149,18 +145,14 @@ public class MiscIogiSupportTest {
 
     @Test
     public void isCapableOfDealingWithEmptyParameterForInternalValueWhichNeedsAConverter() throws OgnlException {
-    	fail("todo. missing localconverters");
-//        final MutableRequest request = mockery.mock(MutableRequest.class);
-//        final RequestInfo webRequest = new RequestInfo(null, request, null);
-//        mockery.checking(new Expectations() {{
-//            exactly(2).of(request).getAttribute("javax.servlet.jsp.jstl.fmt.locale.request");
-//            will(returnValue("pt_br"));
-//            one(converters).to(Calendar.class, null);
-//            will(returnValue(new LocaleBasedCalendarConverter(webRequest)));
-//        }});
-//        Ognl.setValue("cat.firstLeg.birthDay", context, house, "10/5/2010");
-//        assertThat(house.cat.firstLeg.birthDay, is(equalTo((Calendar) new GregorianCalendar(2010, 4, 10))));
-//        mockery.assertIsSatisfied();
-    }
+    	final Target<House> target = Target.create(House.class, "house");
+    	final Parameter parameter = new Parameter("house.cat.firstLeg.birthDay", "10/5/2010");
+    	mockery.checking(new Expectations() {{
+    		allowing(mockLocaleProvider).getLocale();
+    		will(returnValue(new Locale("pt", "BR")));
+    	}});
+    	final House house = iogi.instantiate(target, parameter);
+    	assertThat(house.cat.firstLeg.birthDay, is(equalTo((Calendar)new GregorianCalendar(2010, 4, 10))));
+	}
 
 }

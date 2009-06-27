@@ -49,7 +49,6 @@ import org.junit.Test;
 import br.com.caelum.vraptor.converter.LongConverter;
 import br.com.caelum.vraptor.core.Converters;
 import br.com.caelum.vraptor.http.ParameterNameProvider;
-import br.com.caelum.vraptor.http.ognl.IogiParametersProvider;
 import br.com.caelum.vraptor.ioc.Container;
 import br.com.caelum.vraptor.test.VRaptorMockery;
 import br.com.caelum.vraptor.validator.Message;

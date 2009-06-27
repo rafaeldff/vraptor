@@ -1,4 +1,4 @@
-package br.com.caelum.vraptor.http.ognl;
+package br.com.caelum.vraptor.http.iogi;
 
 import iogi.Iogi;
 import iogi.parameters.Parameter;
@@ -89,8 +89,7 @@ public class IogiParametersProvider implements ParametersProvider {
 
 }
 /*
- Q: Localization.getLocale() or JstlWrapper.findLocale()?
+ Q: Localization.getLocale() or JstlWrapper.findLocale()? PS: C&P code from converters.JstlWrapper in JstlLocaleProvider.
  OBS: pass nameProvider to Iogi
- OBS: testar desagregar parameters do request
  OBS: integrar DI do VRAptor
  */
