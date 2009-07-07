@@ -2,7 +2,7 @@ package br.com.caelum.vraptor.ioc.spring;
 
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
