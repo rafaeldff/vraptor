@@ -38,7 +38,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import br.com.caelum.iogi.Iogi;
-import br.com.caelum.iogi.fixtures.ContainsParameterizedList;
 import br.com.caelum.iogi.parameters.Parameter;
 import br.com.caelum.iogi.reflection.Target;
 import br.com.caelum.iogi.util.DefaultLocaleProvider;
@@ -162,4 +161,9 @@ public class IogiGenericTypesSupportTest {
         assertThat(myCat.eyeColorCode.get(1), is(equalTo(5L)));
     }
 
+    static class ContainsParameterizedList {
+    	public List<Integer> listOfInteger;
+    	public List<Long> listOfLong;
+    	public List<String> listOfString;
+    }
 }
