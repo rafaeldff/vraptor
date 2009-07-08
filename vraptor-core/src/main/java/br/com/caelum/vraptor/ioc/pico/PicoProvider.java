@@ -29,8 +29,12 @@
  */
 package br.com.caelum.vraptor.ioc.pico;
 
-import javax.servlet.ServletContext;
-
+import br.com.caelum.vraptor.ComponentRegistry;
+import br.com.caelum.vraptor.Converter;
+import br.com.caelum.vraptor.core.BaseComponents;
+import br.com.caelum.vraptor.core.Execution;
+import br.com.caelum.vraptor.core.RequestInfo;
+import br.com.caelum.vraptor.ioc.ContainerProvider;
 import org.picocontainer.DefaultPicoContainer;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.behaviors.Caching;
@@ -39,31 +43,8 @@ import org.picocontainer.monitors.NullComponentMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import br.com.caelum.vraptor.ComponentRegistry;
-import br.com.caelum.vraptor.core.BaseComponents;
-import br.com.caelum.vraptor.core.Execution;
-import br.com.caelum.vraptor.core.RequestInfo;
-import br.com.caelum.vraptor.core.URLParameterExtractorInterceptor;
-import br.com.caelum.vraptor.extra.ForwardToDefaultViewInterceptor;
-import br.com.caelum.vraptor.http.TypeCreator;
-import br.com.caelum.vraptor.http.asm.AsmBasedTypeCreator;
-import br.com.caelum.vraptor.http.ognl.EmptyElementsRemoval;
-import br.com.caelum.vraptor.interceptor.ExecuteMethodInterceptor;
-import br.com.caelum.vraptor.interceptor.InstantiateInterceptor;
-import br.com.caelum.vraptor.interceptor.InterceptorListPriorToExecutionExtractor;
-import br.com.caelum.vraptor.interceptor.OutjectResult;
-import br.com.caelum.vraptor.interceptor.ParametersInstantiatorInterceptor;
-import br.com.caelum.vraptor.interceptor.ResourceLookupInterceptor;
-import br.com.caelum.vraptor.interceptor.download.DownloadInterceptor;
-import br.com.caelum.vraptor.interceptor.multipart.DefaultMultipartConfig;
-import br.com.caelum.vraptor.interceptor.multipart.MultipartConfig;
-import br.com.caelum.vraptor.interceptor.multipart.MultipartInterceptor;
-import br.com.caelum.vraptor.ioc.ContainerProvider;
-import br.com.caelum.vraptor.view.DefaultLogicResult;
-import br.com.caelum.vraptor.view.DefaultPageResult;
-import br.com.caelum.vraptor.view.EmptyResult;
-import br.com.caelum.vraptor.view.LogicResult;
-import br.com.caelum.vraptor.view.PageResult;
+import javax.servlet.ServletContext;
+import java.util.Map;
 
 /**
  * Managing internal components by using pico container.<br>
@@ -74,80 +55,86 @@ import br.com.caelum.vraptor.view.PageResult;
  */
 public class PicoProvider implements ContainerProvider {
 
-	private final MutablePicoContainer container;
+    private final MutablePicoContainer container;
 
-	private static final Logger logger = LoggerFactory.getLogger(PicoProvider.class);
+    private static final Logger logger = LoggerFactory.getLogger(PicoProvider.class);
 
-	public PicoProvider() {
-		this.container = new DefaultPicoContainer(new Caching(), new JavaEE5LifecycleStrategy(
-				new NullComponentMonitor()), null);
-		PicoContainersProvider containersProvider = new PicoContainersProvider(this.container);
-		this.container.addComponent(containersProvider);
-		registerComponents(getContainers());
-		containersProvider.init();
-		// TODO: cache
-	}
+    public PicoProvider() {
+        this.container = new DefaultPicoContainer(new Caching(),
+                new JavaEE5LifecycleStrategy(new NullComponentMonitor()), null);
 
-	/**
-	 * Register extra components that your app wants to.
-	 */
-	protected void registerComponents(ComponentRegistry container) {
-		logger.debug("Registering base pico container related implementation components");
-		for (Class<?> type : BaseComponents.getApplicationScoped()) {
-			singleInterfaceRegister(type, container);
-		}
-		for (Class<?> type : BaseComponents.getRequestScoped()) {
-			singleInterfaceRegister(type, container);
-		}
-		for (Class<?> type : new Class[] { DefaultDirScanner.class, WebInfClassesScanner.class }) {
-			singleInterfaceRegister(type, container);
-		}
-		container.register(MultipartConfig.class, DefaultMultipartConfig.class);
+        ComponentFactoryRegistry componentFactoryRegistry = new DefaultComponentFactoryRegistry();
+        PicoComponentRegistry componentRegistry = new PicoComponentRegistry(this.container, componentFactoryRegistry);
 
-		container.register(ForwardToDefaultViewInterceptor.class, ForwardToDefaultViewInterceptor.class);
-		container.register(LogicResult.class, DefaultLogicResult.class);
-		container.register(PageResult.class, DefaultPageResult.class);
-		container.register(EmptyResult.class, EmptyResult.class);
-		container.register(OutjectResult.class, OutjectResult.class);
-		container.register(TypeCreator.class, AsmBasedTypeCreator.class);
-		container.register(EmptyElementsRemoval.class, EmptyElementsRemoval.class);
-		container.register(ParametersInstantiatorInterceptor.class, ParametersInstantiatorInterceptor.class);
-		container.register(InterceptorListPriorToExecutionExtractor.class,
-				InterceptorListPriorToExecutionExtractor.class);
-		container.register(DownloadInterceptor.class, DownloadInterceptor.class);
-		container.register(MultipartInterceptor.class, MultipartInterceptor.class);
-		container.register(URLParameterExtractorInterceptor.class, URLParameterExtractorInterceptor.class);
-		container.register(ResourceLookupInterceptor.class, ResourceLookupInterceptor.class);
-		container.register(InstantiateInterceptor.class, InstantiateInterceptor.class);
-		container.register(ExecuteMethodInterceptor.class, ExecuteMethodInterceptor.class);
-	}
+        this.container.addComponent(componentRegistry);
+        this.container.addComponent(componentFactoryRegistry);
+    }
 
-	private void singleInterfaceRegister(Class<?> type, ComponentRegistry registry) {
-		Class<?>[] interfaces = type.getInterfaces();
-		if (interfaces.length != 1) {
-			throw new IllegalArgumentException("Invalid registering of a type with more than one interface"
-					+ " being registered as a single interface component: " + type.getName());
-		}
-		registry.register(interfaces[0], type);
-	}
+    /**
+     * Register extra components that your app wants to.
+     */
+    protected void registerBundledComponents(ComponentRegistry container) {
+        logger.debug("Registering base pico container related implementation components");
+        for (Map.Entry<Class<?>, Class<?>> entry : BaseComponents.getApplicationScoped().entrySet()) {
+            container.register(entry.getKey(), entry.getValue());
+        }
+        for (Map.Entry<Class<?>, Class<?>> entry : BaseComponents.getRequestScoped().entrySet()) {
+            container.register(entry.getKey(), entry.getValue());
+        }
+        for (Class<? extends Converter<?>> converterType : BaseComponents.getBundledConverters()) {
+            container.register(converterType, converterType);
+        }
 
-	public <T> T provideForRequest(RequestInfo request, Execution<T> execution) {
-		return execution.insideRequest(getContainers().provide(request));
-	}
+        container.register(ResourceRegistrar.class, ResourceRegistrar.class);
+        container.register(InterceptorRegistrar.class, InterceptorRegistrar.class);
+        container.register(ConverterRegistrar.class, ConverterRegistrar.class);
+        container.register(ComponentFactoryRegistrar.class, ComponentFactoryRegistrar.class);
+    }
 
-	public void start(ServletContext context) {
-		this.container.addComponent(context);
-		this.container.getComponent(WebInfClassesScanner.class).loadAll();
-		container.start();
-	}
+    public <T> T provideForRequest(RequestInfo request, Execution<T> execution) {
+        PicoBasedContainer container = null;
+        try {
+            container = getContainers().provideRequestContainer(request);
+            container.getContainer().start();
+            return execution.insideRequest(container);
+        } finally {
+            if (container != null) {
+                MutablePicoContainer picoContainer = container.getContainer();
+                picoContainer.stop();
+                picoContainer.dispose();
+            }
+        }
+    }
 
-	public void stop() {
-		container.stop();
-		container.dispose();
-	}
+    public void start(ServletContext context) {
+        ComponentRegistry components = getContainers();
+        registerBundledComponents(components);
 
-	private PicoContainersProvider getContainers() {
-		return this.container.getComponent(PicoContainersProvider.class);
-	}
+        this.container.addComponent(context);
 
+        Scanner scanner = new ReflectionsScanner(context);
+        new ComponentRegistrar(components).registerFrom(scanner);
+
+        getContainers().init();
+
+        container.getComponent(ResourceRegistrar.class).registerFrom(scanner);
+        container.getComponent(InterceptorRegistrar.class).registerFrom(scanner);
+        container.getComponent(ConverterRegistrar.class).registerFrom(scanner);
+        container.getComponent(ComponentFactoryRegistrar.class).registerFrom(scanner);
+
+        container.start();
+    }
+
+    public void stop() {
+        container.stop();
+        container.dispose();
+    }
+
+    protected PicoComponentRegistry getContainers() {
+        return this.container.getComponent(PicoComponentRegistry.class);
+    }
+
+    protected MutablePicoContainer getContainer() {
+        return container;
+    }
 }

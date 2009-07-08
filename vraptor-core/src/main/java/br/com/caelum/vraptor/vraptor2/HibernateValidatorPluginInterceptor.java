@@ -1,10 +1,12 @@
 package br.com.caelum.vraptor.vraptor2;
 
-import java.text.MessageFormat;
-import java.util.ResourceBundle;
-
-import javax.servlet.http.HttpServletRequest;
-
+import br.com.caelum.vraptor.InterceptionException;
+import br.com.caelum.vraptor.interceptor.Interceptor;
+import br.com.caelum.vraptor.core.InterceptorStack;
+import br.com.caelum.vraptor.core.Localization;
+import br.com.caelum.vraptor.core.MethodInfo;
+import br.com.caelum.vraptor.http.ParameterNameProvider;
+import br.com.caelum.vraptor.resource.ResourceMethod;
 import org.vraptor.i18n.FixedMessage;
 import org.vraptor.i18n.Message;
 import org.vraptor.plugin.hibernate.HibernateLogicMethod;
@@ -14,13 +16,9 @@ import org.vraptor.reflection.GettingException;
 import org.vraptor.validator.BasicValidationErrors;
 import org.vraptor.validator.ValidationErrors;
 
-import br.com.caelum.vraptor.InterceptionException;
-import br.com.caelum.vraptor.Interceptor;
-import br.com.caelum.vraptor.core.InterceptorStack;
-import br.com.caelum.vraptor.core.Localization;
-import br.com.caelum.vraptor.core.MethodInfo;
-import br.com.caelum.vraptor.http.ParameterNameProvider;
-import br.com.caelum.vraptor.resource.ResourceMethod;
+import javax.servlet.http.HttpServletRequest;
+import java.text.MessageFormat;
+import java.util.ResourceBundle;
 
 /**
  * Support to vraptor2 hibernate validator plugin.<br>

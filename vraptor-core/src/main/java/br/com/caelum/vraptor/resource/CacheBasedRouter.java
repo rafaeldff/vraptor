@@ -56,8 +56,8 @@ public class CacheBasedRouter implements Router {
         this.delegate = delegate;
     }
 
-    public Set<Resource> all() {
-        return delegate.all();
+    public Set<ResourceClass> allResources() {
+        return delegate.allResources();
     }
 
     public ResourceMethod parse(String name, HttpMethod methodName, MutableRequest request) {
@@ -71,7 +71,7 @@ public class CacheBasedRouter implements Router {
         return cachedMap.get(methodName);
     }
 
-    public void register(Resource resource) {
+    public void register(ResourceClass resource) {
         delegate.register(resource);
     }
 

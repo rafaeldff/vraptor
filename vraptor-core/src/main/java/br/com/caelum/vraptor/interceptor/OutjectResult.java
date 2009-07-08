@@ -32,7 +32,7 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 
 import br.com.caelum.vraptor.InterceptionException;
-import br.com.caelum.vraptor.Interceptor;
+import br.com.caelum.vraptor.interceptor.Interceptor;
 import br.com.caelum.vraptor.Resource;
 import br.com.caelum.vraptor.Result;
 import br.com.caelum.vraptor.core.InterceptorStack;
@@ -46,7 +46,6 @@ import br.com.caelum.vraptor.vraptor2.Info;
  *
  * @author guilherme silveira
  */
-@RequestScoped
 public class OutjectResult implements Interceptor {
 
 	private final Result result;

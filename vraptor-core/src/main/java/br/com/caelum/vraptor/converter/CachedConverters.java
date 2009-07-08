@@ -29,17 +29,14 @@
  */
 package br.com.caelum.vraptor.converter;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.annotation.PostConstruct;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import br.com.caelum.vraptor.Converter;
 import br.com.caelum.vraptor.core.Converters;
 import br.com.caelum.vraptor.ioc.Container;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class CachedConverters implements Converters {
 
@@ -53,7 +50,7 @@ public class CachedConverters implements Converters {
     }
 
     public Converter<?> to(Class<?> type, Container container) {
-        if(cache.containsKey(type)) {
+        if (cache.containsKey(type)) {
             Class<?> converterType = cache.get(type);
             return (Converter<?>) container.instanceFor(converterType);
         }
@@ -63,9 +60,9 @@ public class CachedConverters implements Converters {
         return converter;
     }
 
-    @PostConstruct
-    public void init() {
-        delegate.init();
+    public void register(Class<? extends Converter<?>> converterClass) {
+        throw new UnsupportedOperationException(
+                "cannot add vr3 converters in cached converters container (or should we delegate?");
     }
 
 }
