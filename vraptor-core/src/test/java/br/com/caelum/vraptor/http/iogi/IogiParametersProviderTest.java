@@ -31,13 +31,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
@@ -49,14 +50,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 import br.com.caelum.iogi.Instantiator;
-import br.com.caelum.iogi.Iogi;
 import br.com.caelum.iogi.parameters.Parameter;
 import br.com.caelum.iogi.parameters.Parameters;
 import br.com.caelum.iogi.reflection.Target;
-import br.com.caelum.iogi.util.DefaultLocaleProvider;
-import br.com.caelum.iogi.util.NullDependencyProvider;
 import br.com.caelum.vraptor.converter.LongConverter;
 import br.com.caelum.vraptor.core.Converters;
+import br.com.caelum.vraptor.core.DefaultConverters;
+import br.com.caelum.vraptor.core.Localization;
 import br.com.caelum.vraptor.http.ParameterNameProvider;
 import br.com.caelum.vraptor.ioc.Container;
 import br.com.caelum.vraptor.resource.ResourceMethod;
@@ -78,19 +78,12 @@ public class IogiParametersProviderTest {
         this.converters = mockery.mock(Converters.class);
         this.mockHttpServletRequest = mockery.mock(HttpServletRequest.class);
         this.mockNameProvider = mockery.mock(ParameterNameProvider.class);
-        Instantiator<Object> instantiator = new Instantiator<Object>(){
-        	private Iogi iogi = new Iogi(new NullDependencyProvider(), new DefaultLocaleProvider());
-			@Override
-			public Object instantiate(Target<?> target, Parameters parameters) {
-				return iogi.instantiate(target, parameters);
-			}
-
-			@Override
-			public boolean isAbleToInstantiate(Target<?> arg0) {
-				return true;
-			}
-		};;
-		this.iogiProvider = new IogiParametersProvider(mockNameProvider, mockHttpServletRequest, instantiator );
+        
+        Container mockContainer = mockery.mock(Container.class);
+		Localization localization = mockery.mock(Localization.class);
+		Instantiator<Object> instantiator = new VRaptorInstantiator(new DefaultConverters(), mockContainer, localization );
+		
+		this.iogiProvider = new IogiParametersProvider(mockNameProvider, mockHttpServletRequest, instantiator);
         this.errors = new ArrayList<Message>();
         mockery.checking(new Expectations() {
             {

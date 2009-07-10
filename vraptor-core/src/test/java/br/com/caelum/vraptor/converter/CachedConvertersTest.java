@@ -30,6 +30,7 @@ package br.com.caelum.vraptor.converter;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.*;
 
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -45,7 +46,7 @@ public class CachedConvertersTest {
     private Mockery mockery;
     private CachedConverters converters;
     private Converters delegate;
-    private Converter converter;
+    private Converter<?> converter;
     private Container container;
 
     @Before
@@ -62,8 +63,9 @@ public class CachedConvertersTest {
         });
     }
 
-    @Test
+	@Test
     public void shouldUseTheProvidedConverterDuringFirstRequest() {
+		@SuppressWarnings("unchecked")
         Converter found = converters.to(CachedConvertersTest.class, container);
         assertThat(found, is(equalTo(this.converter)));
         mockery.assertIsSatisfied();
@@ -74,9 +76,32 @@ public class CachedConvertersTest {
         mockery.checking(new Expectations(){{
             one(container).instanceFor(converter.getClass()); will(returnValue(converter));
         }});
+        @SuppressWarnings("unchecked")
         Converter found = converters.to(CachedConvertersTest.class, container);
         assertThat(converters.to(CachedConvertersTest.class, container), is(equalTo(found)));
         mockery.assertIsSatisfied();
+    }
+    
+    @Test
+	public void existsForWillReturnTrueIfTypeIsAlreadyCached() throws Exception {
+    	mockery.checking(new Expectations(){{
+    		one(container).instanceFor(converter.getClass()); will(returnValue(converter));
+    		
+    		allowing(delegate).existsFor(CachedConvertersTest.class, container);
+    		will(returnValue(true));
+    	}});
+    	
+    	assertTrue(converters.existsFor(CachedConvertersTest.class, container));
+	}
+    
+    @Test
+    public void existsForWillReturnTrueIfDelegateAlsoReturnsTrue() throws Exception {
+    	mockery.checking(new Expectations(){{
+    		atLeast(1).of(delegate).existsFor(CachedConvertersTest.class, container);
+    		will(returnValue(true));
+    	}});
+    	
+    	assertTrue(converters.existsFor(CachedConvertersTest.class, container));
     }
 
 }

@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.typeCompatibleWith;
+import static org.junit.Assert.*;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -170,5 +171,19 @@ public class DefaultConvertersTest {
         assertThat(found.getClass(), is(typeCompatibleWith(MySecondConverter.class)));
         mockery.assertIsSatisfied();
     }
+    
+    @Test
+	public void existsForWillReturnTrueForRegisteredConverters() throws Exception {
+		converters.register(MyConverter.class);
+		
+		mockery.checking(new Expectations() {
+            {
+                allowing(container).instanceFor(MyConverter.class);
+                will(returnValue(new MyConverter()));
+            }
+        });
+		
+		assertTrue(converters.existsFor(MyData.class, container));
+	}
 
 }
