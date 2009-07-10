@@ -79,5 +79,33 @@ public class VRaptor2ConvertersTest {
         assertThat(converters.to(Integer.class, container).getClass(), is(typeCompatibleWith(VRaptor3BasedConverter.class)));
         mockery.assertIsSatisfied();
     }
+    
+    @Test
+	public void existsForWillReturnTrueIfAVraptor3ConverterExistsForTheType() throws Exception {
+    	final Converters delegate = mockery.mock(Converters.class);
+    	mockery.checking(new Expectations() {
+    		{
+    			allowing(config).getConverters(); will(returnValue(Arrays.asList(new String[0])));
+    			allowing(delegate).existsFor(Integer.class, container); will(returnValue(true));
+    		}
+    	});
+    	final VRaptor2Converters converters = new VRaptor2Converters(config, delegate);
+    	assertThat(converters.existsFor(Integer.class, container), is(true));
+	}
+    
+    @Test
+    public void existsForWillReturnTrueIfAVraptor2ConverterExistsForTheType() throws Exception {
+    	final Converters stubConverters = mockery.mock(Converters.class);
+        mockery.checking(new Expectations() {
+            {
+            	allowing(stubConverters).existsFor(with(any(Class.class)), with(any(Container.class)));
+            	will(returnValue(false));
+            	
+                one(config).getConverters(); will(returnValue(Arrays.asList(new String[]{VRaptor2BasedConverter.class.getName()})));
+            }
+        });
+		final VRaptor2Converters converters = new VRaptor2Converters(config, stubConverters);
+    	assertThat(converters.existsFor(Integer.class, container), is(true));
+    }
 
 }

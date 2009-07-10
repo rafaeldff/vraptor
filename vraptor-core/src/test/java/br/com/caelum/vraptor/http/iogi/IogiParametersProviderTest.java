@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.ResourceBundle;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
@@ -70,6 +69,7 @@ public class IogiParametersProviderTest {
     private ParameterNameProvider mockNameProvider;
     private HttpServletRequest mockHttpServletRequest;
     private ArrayList<Message> errors;
+	private Container mockContainer;
 
     @SuppressWarnings("unchecked")
     @Before
@@ -79,9 +79,10 @@ public class IogiParametersProviderTest {
         this.mockHttpServletRequest = mockery.mock(HttpServletRequest.class);
         this.mockNameProvider = mockery.mock(ParameterNameProvider.class);
         
-        Container mockContainer = mockery.mock(Container.class);
-		Localization localization = mockery.mock(Localization.class);
-		Instantiator<Object> instantiator = new VRaptorInstantiator(new DefaultConverters(), mockContainer, localization );
+        mockContainer = mockery.mock(Container.class);
+		final Localization localization = mockery.mock(Localization.class);
+	
+		Instantiator<Object> instantiator = new VRaptorInstantiator(new DefaultConverters(), mockContainer, localization);
 		
 		this.iogiProvider = new IogiParametersProvider(mockNameProvider, mockHttpServletRequest, instantiator);
         this.errors = new ArrayList<Message>();
@@ -89,6 +90,8 @@ public class IogiParametersProviderTest {
             {
                 allowing(converters).to((Class) with(an(Class.class)), with(any(Container.class)));
                 will(returnValue(new LongConverter()));
+                
+                ignoring(localization);
             }
         });
     }
@@ -225,12 +228,16 @@ public class IogiParametersProviderTest {
         final Method method = MyResource.class.getDeclaredMethod("buyA", House.class);
         mockery.checking(new Expectations() {
             {
+            	allowing(mockContainer).instanceFor(LongConverter.class);
+            	will(returnValue(new LongConverter()));
+            	
                 one(mockHttpServletRequest).getParameterValues("house.ids[1]");
                 will(returnValue(new String[]{"3"}));
                 one(mockHttpServletRequest).getParameterNames();
                 will(returnValue(enumerationFor("house.ids[1]")));
                 one(mockNameProvider).parameterNamesFor(method);
                 will(returnValue(new String[]{"house"}));
+                
             }
         });
         Object[] params = iogiProvider.getParametersFor(mockery.methodFor(MyResource.class, "buyA", House.class), errors,
