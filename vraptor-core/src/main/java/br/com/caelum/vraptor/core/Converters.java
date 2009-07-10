@@ -52,4 +52,6 @@ public interface Converters {
 
 	void register(Class<? extends Converter<?>> converterClass);
 
+	boolean existsFor(Class<?> type, Container container);
+
 }
