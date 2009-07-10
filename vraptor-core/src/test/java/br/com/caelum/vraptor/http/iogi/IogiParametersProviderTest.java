@@ -31,7 +31,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -49,12 +49,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import br.com.caelum.iogi.Instantiator;
-import br.com.caelum.iogi.Iogi;
 import br.com.caelum.iogi.parameters.Parameter;
 import br.com.caelum.iogi.parameters.Parameters;
 import br.com.caelum.iogi.reflection.Target;
-import br.com.caelum.iogi.util.DefaultLocaleProvider;
-import br.com.caelum.iogi.util.NullDependencyProvider;
 import br.com.caelum.vraptor.converter.LongConverter;
 import br.com.caelum.vraptor.core.Converters;
 import br.com.caelum.vraptor.core.DefaultConverters;
@@ -81,11 +78,6 @@ public class IogiParametersProviderTest {
         this.converters = mockery.mock(Converters.class);
         this.mockHttpServletRequest = mockery.mock(HttpServletRequest.class);
         this.mockNameProvider = mockery.mock(ParameterNameProvider.class);
-        	private Iogi iogi = new Iogi(new NullDependencyProvider(), new DefaultLocaleProvider());
-			@Override
-			public Object instantiate(Target<?> target, Parameters parameters) {
-				return iogi.instantiate(target, parameters);
-			}
         
         mockContainer = mockery.mock(Container.class);
 		final Localization localization = mockery.mock(Localization.class);
