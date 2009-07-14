@@ -37,6 +37,11 @@ public class VRaptorMockery {
 		}
 	}
 
+
+	public Sequence sequence(String name) {
+		return mockery.sequence(name);
+	}
+
 	public void assertIsSatisfied() {
 		mockery.assertIsSatisfied();
 	}
@@ -134,9 +139,11 @@ public class VRaptorMockery {
 		// ognl design sucks when methods should return the interface types, not the implementation types
 		return new SimpleNode(0) {
 			private static final long serialVersionUID = 1L;
+			@Override
 			protected Object getValueBody(OgnlContext arg0, Object arg1) throws OgnlException {
 				return null;
 			}
+			@Override
 			public String toString() {
 				return name;
 			}
