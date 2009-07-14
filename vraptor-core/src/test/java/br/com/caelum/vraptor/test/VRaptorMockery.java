@@ -161,8 +161,4 @@ public class VRaptorMockery {
 	public <T> T mock(Class<T> type, String name) {
 		return mockery.mock(type,name);
 	}
-
-	public Sequence sequence(String sequenceName) {
-		return mockery.sequence(sequenceName);
-	}
 }
