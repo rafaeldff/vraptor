@@ -10,7 +10,7 @@ import br.com.caelum.iogi.ObjectInstantiator;
 import br.com.caelum.iogi.collections.ArrayInstantiator;
 import br.com.caelum.iogi.collections.ListInstantiator;
 import br.com.caelum.iogi.conversion.StringConverter;
-import br.com.caelum.iogi.conversion.TypeConverter;
+import br.com.caelum.iogi.parameters.Parameter;
 import br.com.caelum.iogi.parameters.Parameters;
 import br.com.caelum.iogi.reflection.Target;
 import br.com.caelum.iogi.spi.DependencyProvider;
@@ -43,7 +43,7 @@ public class VRaptorInstantiator implements Instantiator<Object> {
 			.add(new VRaptorTypeConverter())
 			.add(new StringConverter())
 			.add(new ArrayInstantiator(this))
-			.add(new ListInstantiator(this))
+			.add(new NullDecorator(new ListInstantiator(this))) //NOTE: NullDecorator is here to preserve existing behaviour. Don't know if it is the ideal one, though.
 			.add(new ObjectInstantiator(this, dependencyProvider, parameterNamesProvider))
 			.build();
 		multiInstantiator = new MultiInstantiator(instantiatorList);
@@ -59,21 +59,23 @@ public class VRaptorInstantiator implements Instantiator<Object> {
 		return multiInstantiator.instantiate(target, parameters);
 	}
 	
-	private final class VRaptorTypeConverter extends TypeConverter<Object> {
+	private final class VRaptorTypeConverter implements Instantiator<Object> {
 		@Override
 		public boolean isAbleToInstantiate(Target<?> target) {
 			return converters.existsFor(target.getClassType(), container);
 		}
 
 		@Override
-		protected Object convert(String stringValue, Target<?> to) throws Exception {
-			return converterForTarget(to).convert(stringValue, to.getClassType(), localization.getBundle());
-		}
-
+		public Object instantiate(Target<?> target, Parameters parameters) {
+			Parameter parameter = parameters.namedAfter(target);
+			final String stringValue = parameter != null ? parameter.getValue() : null;
+			return converterForTarget(target).convert(stringValue, target.getClassType(), localization.getBundle());
+		}		
+		
 		@SuppressWarnings("unchecked")
 		private Converter<Object> converterForTarget(Target<?> target) {
 			return (Converter<Object>) converters.to(target.getClassType(), container);
-		}		
+		}
 	}
 	
 	private final class VRaptorDependencyProvider implements DependencyProvider {
@@ -95,5 +97,25 @@ public class VRaptorInstantiator implements Instantiator<Object> {
 			return Arrays.asList(parameterNameProvider.parameterNamesFor(methodOrConstructor));
 		}
 		
+	}
+	
+	private final class NullDecorator implements Instantiator<Object> {
+		private final Instantiator<?> delegateInstantiator;
+
+		public NullDecorator(Instantiator<?> delegateInstantiator) {
+			this.delegateInstantiator = delegateInstantiator;
+		}
+
+		@Override
+		public boolean isAbleToInstantiate(Target<?> target) {
+			return delegateInstantiator.isAbleToInstantiate(target);
+		}
+		
+		@Override
+		public Object instantiate(Target<?> target, Parameters parameters) {
+			if (!parameters.hasRelatedTo(target)) 
+				return null;
+			return delegateInstantiator.instantiate(target, parameters);
+		}
 	}
 }
