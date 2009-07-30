@@ -27,35 +27,48 @@
  */
 package br.com.caelum.vraptor.ioc.spring;
 
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanPostProcessor;
+import java.util.List;
 
-import br.com.caelum.vraptor.http.route.Router;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
+
 import br.com.caelum.vraptor.ioc.ApplicationScoped;
+import br.com.caelum.vraptor.ioc.StereotypeHandler;
 
 /**
  * @author Fabio Kung
  */
 @ApplicationScoped
-public class ResourceRegistrar implements BeanPostProcessor {
-    private final ResourcesHolder resourcesHolder;
-    private final Router resourceRegistry;
-    private boolean run;
+public class StereotypedBeansRegistrar implements ApplicationListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StereotypedBeansRegistrar.class);
+	private final List<StereotypeHandler> stereotypeHandlers;
 
-    public ResourceRegistrar(ResourcesHolder resourcesHolder, Router resourceRegistry) {
-        this.resourcesHolder = resourcesHolder;
-        this.resourceRegistry = resourceRegistry;
+    public StereotypedBeansRegistrar(List<StereotypeHandler> stereotypeHandlers) {
+		this.stereotypeHandlers = stereotypeHandlers;
     }
 
-    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-        if (!run) {
-            run = true;
-            resourcesHolder.registerAllOn(resourceRegistry);
-        }
-        return bean;
-    }
+	public void onApplicationEvent(ApplicationEvent event) {
+		if (event instanceof ContextRefreshedEvent) {
+			ContextRefreshedEvent contextRefreshedEvent = (ContextRefreshedEvent) event;
+			handleRefresh(contextRefreshedEvent.getApplicationContext());
+		}
+	}
 
-    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        return bean;
-    }
+	private void handleRefresh(ApplicationContext beanFactory) {
+		String[] beanDefinitionNames = beanFactory.getBeanDefinitionNames();
+		for (String name : beanDefinitionNames) {
+			Class<?> beanType = beanFactory.getType(name);
+			LOGGER.debug("scanning bean with type: " + beanType + ", to see if it is a component candidate");
+			
+			for (StereotypeHandler handler : stereotypeHandlers) {
+				if (beanType.isAnnotationPresent(handler.stereotype())) {
+					handler.handle(beanType);
+				}
+			}
+		}
+	}
 }

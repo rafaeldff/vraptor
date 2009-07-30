@@ -27,6 +27,7 @@
  */
 package br.com.caelum.vraptor.ioc.pico;
 
+import static org.junit.Assert.*;
 import br.com.caelum.vraptor.core.RequestInfo;
 import br.com.caelum.vraptor.ioc.ContainerProvider;
 import br.com.caelum.vraptor.ioc.GenericContainerTest;
@@ -35,12 +36,23 @@ import br.com.caelum.vraptor.test.HttpServletRequestMock;
 import br.com.caelum.vraptor.test.HttpSessionMock;
 import org.jmock.Expectations;
 import org.junit.Test;
+import org.reflections.util.ClasspathHelper;
+
+import com.google.common.collect.Iterators;
+import com.google.common.collect.UnmodifiableIterator;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PicoProviderTest extends GenericContainerTest {
     private int counter;
@@ -48,7 +60,7 @@ public class PicoProviderTest extends GenericContainerTest {
     @SuppressWarnings("unchecked")
     @Test
     public void canProvidePicoSpecificApplicationScopedComponents() {
-        List<Class<?>> components = Arrays.asList(Scanner.class, ComponentRegistrar.class,
+        List<Class<?>> components = Arrays.asList(Scanner.class, StereotypedComponentRegistrar.class,
                 ComponentFactoryRegistrar.class, InterceptorRegistrar.class, ConverterRegistrar.class,
                 ResourceRegistrar.class);
         checkAvailabilityFor(true, components);
@@ -84,21 +96,14 @@ public class PicoProviderTest extends GenericContainerTest {
         try {
             mockery.checking(new Expectations() {
                 {
-                    File tmpDir = File.createTempFile("tmp_", "_file").getParentFile();
-                    File tmp = new File(tmpDir, "_tmp_vraptor_test");
-                    tmp.mkdir();
-                    File webInf = new File(tmp, "WEB-INF");
-                    webInf.mkdir();
-                    File webInfClasses = new File(webInf, "classes");
-                    webInfClasses.mkdir();
-
-                    allowing(context).getRealPath("/WEB-INF/classes/");
-                    will(returnValue(webInfClasses.getAbsolutePath()));
+					URL fixtureJarURL = GenericContainerTest.class.getResource("test-fixture.jar");
+					File fixtureJarFile = new File(new URI(fixtureJarURL.toString()));
+					allowing(context).getRealPath("/WEB-INF/classes/");
+					will(returnValue(fixtureJarFile.getAbsolutePath()));
                 }
             });
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
-        }
+		}
     }
-
 }

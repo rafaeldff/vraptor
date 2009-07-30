@@ -1,5 +1,12 @@
 package br.com.caelum.vraptor.ioc.pico;
 
+import static java.util.Arrays.asList;
+
+import org.jmock.Expectations;
+import org.jmock.Mockery;
+import org.junit.Before;
+import org.junit.Test;
+
 import br.com.caelum.vraptor.InterceptionException;
 import br.com.caelum.vraptor.Intercepts;
 import br.com.caelum.vraptor.VRaptorException;
@@ -8,12 +15,6 @@ import br.com.caelum.vraptor.interceptor.Interceptor;
 import br.com.caelum.vraptor.interceptor.InterceptorRegistry;
 import br.com.caelum.vraptor.interceptor.InterceptorSequence;
 import br.com.caelum.vraptor.resource.ResourceMethod;
-import org.jmock.Expectations;
-import org.jmock.Mockery;
-import org.junit.Before;
-import org.junit.Test;
-
-import static java.util.Arrays.asList;
 
 /**
  * @author Fabio Kung

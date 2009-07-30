@@ -81,17 +81,15 @@ public class VRaptor2ConvertersTest {
     }
     
     @Test
-	public void existsForWillReturnTrueIfAVraptor3ConverterExistsForTheType() throws Exception {
+	public void registeringAConverterWillDelegateToTheVRaptor3Converter() throws Exception {
     	final Converters delegate = mockery.mock(Converters.class);
-    	mockery.checking(new Expectations() {
-    		{
-    			allowing(config).getConverters(); will(returnValue(Arrays.asList(new String[0])));
-    			allowing(delegate).existsFor(Integer.class, container); will(returnValue(true));
-    		}
-    	});
+    	mockery.checking(new Expectations() {{
+    		allowing(config).getConverters(); will(returnValue(Arrays.asList(new String[0])));
+    		one(delegate).register(VRaptor3BasedConverter.class);
+    	}});
     	final VRaptor2Converters converters = new VRaptor2Converters(config, delegate);
-    	assertThat(converters.existsFor(Integer.class, container), is(true));
-	}
+    	converters.register(VRaptor3BasedConverter.class);
+    	mockery.assertIsSatisfied();
     
     @Test
     public void existsForWillReturnTrueIfAVraptor2ConverterExistsForTheType() throws Exception {

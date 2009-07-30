@@ -27,7 +27,35 @@
  */
 package br.com.caelum.vraptor.ioc;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.hamcrest.MatcherAssert;
+import org.jmock.Mockery;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import br.com.caelum.vraptor.ComponentRegistry;
+import br.com.caelum.vraptor.Converter;
 import br.com.caelum.vraptor.Result;
 import br.com.caelum.vraptor.Validator;
 import br.com.caelum.vraptor.core.BaseComponents;
@@ -54,30 +82,17 @@ import br.com.caelum.vraptor.interceptor.ParametersInstantiatorInterceptor;
 import br.com.caelum.vraptor.interceptor.ResourceLookupInterceptor;
 import br.com.caelum.vraptor.interceptor.download.DownloadInterceptor;
 import br.com.caelum.vraptor.interceptor.multipart.MultipartInterceptor;
+import br.com.caelum.vraptor.ioc.fixture.ConverterInTheClasspath;
+import br.com.caelum.vraptor.ioc.fixture.CustomComponentInTheClasspath;
+import br.com.caelum.vraptor.ioc.fixture.InterceptorInTheClasspath;
+import br.com.caelum.vraptor.ioc.fixture.ResourceInTheClasspath;
+import br.com.caelum.vraptor.resource.DefaultResourceClass;
+import br.com.caelum.vraptor.resource.ResourceClass;
 import br.com.caelum.vraptor.resource.ResourceMethod;
 import br.com.caelum.vraptor.resource.ResourceNotFoundHandler;
 import br.com.caelum.vraptor.view.LogicResult;
 import br.com.caelum.vraptor.view.PageResult;
 import br.com.caelum.vraptor.view.PathResolver;
-import org.hamcrest.MatcherAssert;
-import static org.hamcrest.Matchers.*;
-import org.jmock.Mockery;
-import org.junit.After;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Acceptance test that checks if the container is capable of giving all
@@ -85,7 +100,6 @@ import java.util.List;
  *
  * @author Guilherme Silveira
  */
-@Ignore
 public abstract class GenericContainerTest {
 
     protected Mockery mockery;
@@ -238,6 +252,18 @@ public abstract class GenericContainerTest {
             }
         });
     }
+    
+    public <T> T getFromContainer(final Class<T> componentToBeRetrieved) {
+    	return executeInsideRequest(new WhatToDo<T>() {
+            public T execute(RequestInfo request, final int counter) {
+                return provider.provideForRequest(request, new Execution<T>() {
+                    public T insideRequest(Container firstContainer) {
+                        return firstContainer.instanceFor(componentToBeRetrieved);
+                    }
+                });
+            }
+        });
+    }
 
     private boolean isAppScoped(Container secondContainer, Class<?> componentToRegister) {
         return secondContainer.instanceFor(componentToRegister) != null;
@@ -293,5 +319,38 @@ public abstract class GenericContainerTest {
         StartableComponent comp = registerAndGetFromContainer(StartableComponent.class, null);
         assertTrue(comp.started);
     }
-
+    
+    @Test
+	public void canProvideComponentsInTheClasspath() throws Exception {
+    	checkAvailabilityFor(false, Collections.<Class<?>>singleton(CustomComponentInTheClasspath.class));
+	}
+    
+    @Test
+    public void shoudRegisterResourcesInRouter() {
+    	Router router = getFromContainer(Router.class);
+    	ResourceClass dummyResourceClass = new DefaultResourceClass(ResourceInTheClasspath.class);
+    	assertThat(router.allResources(), hasItem(dummyResourceClass));
+    }
+    
+    @Test
+    public void shoudRegisterInterceptorsInInterceptorRegistry() {
+    	InterceptorRegistry registry = getFromContainer(InterceptorRegistry.class);
+    	assertThat(registry.all(), hasItem(InterceptorInTheClasspath.class));
+    }
+    
+	@Test
+	public void shoudRegisterConvertersInConverters() {
+		executeInsideRequest(new WhatToDo<Converters>() {
+			public Converters execute(RequestInfo request, final int counter) {
+				return provider.provideForRequest(request, new Execution<Converters>() {
+					public Converters insideRequest(Container container) {
+						Converters converters = container.instanceFor(Converters.class);
+						Converter<?> converter = converters.to(Void.class, container);
+						assertThat(converter, is(instanceOf(ConverterInTheClasspath.class)));
+						return null;
+					}
+				});
+			}
+		});
+	}
 }

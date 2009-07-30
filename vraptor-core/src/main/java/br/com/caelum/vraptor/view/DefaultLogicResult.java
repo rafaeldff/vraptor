@@ -36,11 +36,13 @@ import javax.servlet.http.HttpServletResponse;
 
 import br.com.caelum.vraptor.Get;
 import br.com.caelum.vraptor.http.MutableRequest;
+import br.com.caelum.vraptor.http.TypeCreator;
 import br.com.caelum.vraptor.http.route.Router;
 import br.com.caelum.vraptor.proxy.MethodInvocation;
 import br.com.caelum.vraptor.proxy.Proxifier;
 import br.com.caelum.vraptor.proxy.ProxyInvocationException;
 import br.com.caelum.vraptor.proxy.SuperMethod;
+import br.com.caelum.vraptor.resource.DefaultResourceMethod;
 import br.com.caelum.vraptor.resource.HttpMethod;
 
 /**
@@ -51,19 +53,24 @@ import br.com.caelum.vraptor.resource.HttpMethod;
  */
 public class DefaultLogicResult implements LogicResult {
 
+	public static final String FLASH_PARAMETERS = "_vraptor_flash_parameters";
+
     private final Proxifier proxifier;
     private final Router router;
     private final ServletContext context;
     private final MutableRequest request;
     private final HttpServletResponse response;
 
+	private final TypeCreator creator;
+
     public DefaultLogicResult(Proxifier proxifier, Router router, ServletContext context, MutableRequest request,
-            HttpServletResponse response) {
+            HttpServletResponse response, TypeCreator creator) {
         this.proxifier = proxifier;
         this.response = response;
         this.context = context;
         this.request = request;
         this.router = router;
+		this.creator = creator;
     }
     private void setHttpMethod(Method method) {
     	for (HttpMethod httpMethod : HttpMethod.values()) {
@@ -79,6 +86,7 @@ public class DefaultLogicResult implements LogicResult {
                 try {
                     String url = router.urlFor(type, method, args);
                     setHttpMethod(method);
+                    includeParametersInFlash(type, method, args);
                     request.getRequestDispatcher(url).forward(request, response);
                     return null;
                 } catch (ServletException e) {
@@ -87,9 +95,15 @@ public class DefaultLogicResult implements LogicResult {
                     throw new ProxyInvocationException(e);
                 }
             }
+
         });
     }
 
+    private <T> void includeParametersInFlash(final Class<T> type,
+    		Method method, Object[] args) {
+    	Object params = creator.instanceWithParameters(DefaultResourceMethod.instanceFor(type, method), args);
+    	request.getSession().setAttribute(FLASH_PARAMETERS, params);
+    }
     public <T> T redirectTo(final Class<T> type) {
         return proxifier.proxify(type, new MethodInvocation<T>() {
             public Object intercept(T proxy, Method method, Object[] args, SuperMethod superMethod) {
@@ -99,6 +113,7 @@ public class DefaultLogicResult implements LogicResult {
                 try {
                     String path = context.getContextPath();
                     String url = router.urlFor(type, method, args);
+                    includeParametersInFlash(type, method, args);
                     response.sendRedirect(path + url);
                     return null;
                 } catch (IOException e) {

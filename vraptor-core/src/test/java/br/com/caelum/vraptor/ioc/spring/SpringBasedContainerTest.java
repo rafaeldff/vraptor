@@ -27,6 +27,7 @@
  */
 package br.com.caelum.vraptor.ioc.spring;
 
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -45,16 +46,26 @@ import org.junit.Test;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import br.com.caelum.vraptor.Converter;
+import br.com.caelum.vraptor.core.Converters;
 import br.com.caelum.vraptor.core.RequestInfo;
 import br.com.caelum.vraptor.http.UrlToResourceTranslator;
+import br.com.caelum.vraptor.http.route.Router;
+import br.com.caelum.vraptor.interceptor.InterceptorRegistry;
 import br.com.caelum.vraptor.ioc.Container;
 import br.com.caelum.vraptor.ioc.spring.components.ConstructorInjection;
 import br.com.caelum.vraptor.ioc.spring.components.CustomTranslator;
 import br.com.caelum.vraptor.ioc.spring.components.DummyComponent;
+import br.com.caelum.vraptor.ioc.spring.components.DummyConverter;
 import br.com.caelum.vraptor.ioc.spring.components.DummyImplementation;
+import br.com.caelum.vraptor.ioc.spring.components.DummyInterceptor;
+import br.com.caelum.vraptor.ioc.spring.components.DummyResource;
+import br.com.caelum.vraptor.ioc.spring.components.Foo;
 import br.com.caelum.vraptor.ioc.spring.components.RequestScopedComponent;
 import br.com.caelum.vraptor.ioc.spring.components.RequestScopedContract;
 import br.com.caelum.vraptor.ioc.spring.components.SpecialImplementation;
+import br.com.caelum.vraptor.resource.DefaultResourceClass;
+import br.com.caelum.vraptor.resource.ResourceClass;
 import br.com.caelum.vraptor.test.HttpServletRequestMock;
 import br.com.caelum.vraptor.test.HttpSessionMock;
 
@@ -148,5 +159,26 @@ public class SpringBasedContainerTest {
         UrlToResourceTranslator translator = this.container.instanceFor(UrlToResourceTranslator.class);
         assertThat(translator, is(notNullValue()));
         assertThat(translator, is(instanceOf(CustomTranslator.class)));
+
+    }
+    
+    @Test
+    public void shoudRegisterResourcesInRouter() {
+    	Router router = container.instanceFor(Router.class);
+    	ResourceClass dummyResourceClass = new DefaultResourceClass(DummyResource.class);
+    	assertThat(router.allResources(), hasItem(dummyResourceClass));
+    }
+    
+    @Test
+    public void shoudRegisterConvertersInConverters() {
+    	Converters converters = container.instanceFor(Converters.class);
+    	Converter<?> converter = converters.to(Foo.class, container);
+		assertThat(converter, is(instanceOf(DummyConverter.class)));
+    }
+    
+    @Test
+    public void shoudRegisterInterceptorsInInterceptorRegistry() {
+    	InterceptorRegistry registry = container.instanceFor(InterceptorRegistry.class);
+    	assertThat(registry.all(), hasItem(DummyInterceptor.class));
     }
 }

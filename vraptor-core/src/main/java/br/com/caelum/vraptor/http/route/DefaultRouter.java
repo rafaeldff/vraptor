@@ -38,17 +38,14 @@ import java.util.Set;
 
 import br.com.caelum.vraptor.VRaptorException;
 import br.com.caelum.vraptor.http.MutableRequest;
-import br.com.caelum.vraptor.http.ParameterNameProvider;
 import br.com.caelum.vraptor.http.TypeCreator;
 import br.com.caelum.vraptor.ioc.ApplicationScoped;
 import br.com.caelum.vraptor.proxy.Proxifier;
-import br.com.caelum.vraptor.resource.DefaultResourceClass;
 import br.com.caelum.vraptor.resource.DefaultResourceMethod;
 import br.com.caelum.vraptor.resource.HttpMethod;
 import br.com.caelum.vraptor.resource.ResourceClass;
 import br.com.caelum.vraptor.resource.ResourceMethod;
 import br.com.caelum.vraptor.resource.VRaptorInfo;
-import br.com.caelum.vraptor.vraptor2.Info;
 
 /**
  * The default implementation of resource localization rules. It also uses a
@@ -70,13 +67,11 @@ public class DefaultRouter implements Router {
 	private final Collection<Route> routes = new PriorityRoutesList();
 	private final Set<ResourceClass> resources = new HashSet<ResourceClass>();
 	private final RoutesParser routesParser;
-	private final ParameterNameProvider provider;
 	private final TypeCreator creator;
 
 	public DefaultRouter(RoutesConfiguration config, RoutesParser resourceRoutesCreator,
-			ParameterNameProvider provider, Proxifier proxifier, TypeCreator creator) {
+			Proxifier proxifier, TypeCreator creator) {
 		this.routesParser = resourceRoutesCreator;
-		this.provider = provider;
 		this.creator = creator;
 		this.proxifier = proxifier;
 		// this resource should be kept here so it doesnt matter whether
@@ -157,16 +152,9 @@ public class DefaultRouter implements Router {
 	public <T> String urlFor(Class<T> type, Method method, Object... params) {
 		for (Route route : routes) {
 			if (route.canHandle(type, method)) {
-				String[] names = provider.parameterNamesFor(method);
-				Class<?> parameterType = creator.typeFor(new DefaultResourceMethod(new DefaultResourceClass(type),
-						method));
 				try {
-					Object root = parameterType.getConstructor().newInstance();
-					for (int i = 0; i < names.length; i++) {
-						Method setter = findSetter(parameterType, "set" + Info.capitalize(names[i]));
-						setter.invoke(root, params[i]);
-					}
-					return route.urlFor(type, method, root);
+					ResourceMethod resourceMethod = DefaultResourceMethod.instanceFor(type, method);
+					return route.urlFor(type, method, creator.instanceWithParameters(resourceMethod, params));
 				} catch (Exception e) {
 					throw new VRaptorException("The selected route is invalid for redirection: " + type.getName() + "."
 							+ method.getName(), e);
@@ -175,18 +163,6 @@ public class DefaultRouter implements Router {
 		}
 		throw new RouteNotFoundException("The selected route is invalid for redirection: " + type.getName() + "."
 				+ method.getName());
-	}
-
-	private Method findSetter(Class<?> parameterType, String methodName) {
-		for (Method m : parameterType.getDeclaredMethods()) {
-			if (m.getName().equals(methodName)) {
-				return m;
-			}
-		}
-		throw new VRaptorException(
-				"Unable to redirect using route as setter method for parameter setting was not created. "
-						+ "Thats probably a bug on your type creator. "
-						+ "If you are using the default type creator, notify VRaptor.");
 	}
 
 	public List<Route> allRoutes() {

@@ -27,6 +27,7 @@
  */
 package br.com.caelum.vraptor.ioc.spring;
 
+import java.lang.annotation.Annotation;
 import java.util.Map;
 
 import javax.servlet.ServletContext;
@@ -71,6 +72,9 @@ import br.com.caelum.vraptor.interceptor.download.DownloadInterceptor;
 import br.com.caelum.vraptor.interceptor.multipart.DefaultMultipartConfig;
 import br.com.caelum.vraptor.interceptor.multipart.MultipartInterceptor;
 import br.com.caelum.vraptor.ioc.ComponentFactory;
+import br.com.caelum.vraptor.ioc.ConverterHandler;
+import br.com.caelum.vraptor.ioc.ResourceHandler;
+import br.com.caelum.vraptor.ioc.StereotypeHandler;
 import br.com.caelum.vraptor.proxy.DefaultProxifier;
 import br.com.caelum.vraptor.view.DefaultAcceptHeaderToFormat;
 import br.com.caelum.vraptor.view.DefaultLogicResult;
@@ -124,9 +128,12 @@ public class VRaptorApplicationContext extends AbstractRefreshableWebApplication
         for (Class<?> type : BaseComponents.getApplicationScoped().values()) {
             registerOn(beanFactory, type);
         }
-        registerOn(beanFactory, ResourcesHolder.class);
-        registerOn(beanFactory, ResourceFinder.class);
-        registerOn(beanFactory, ResourceRegistrar.class);
+        
+        for (Class<? extends StereotypeHandler> handlerType : BaseComponents.getStereotypeHandlers()) {
+			registerOn(beanFactory, handlerType);
+		}
+        
+        registerOn(beanFactory, StereotypedBeansRegistrar.class);
         registerOn(beanFactory, DefaultMultipartConfig.class);
     }
 
