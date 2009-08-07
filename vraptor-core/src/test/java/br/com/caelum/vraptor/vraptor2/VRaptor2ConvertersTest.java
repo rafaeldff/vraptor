@@ -90,6 +90,7 @@ public class VRaptor2ConvertersTest {
     	final VRaptor2Converters converters = new VRaptor2Converters(config, delegate);
     	converters.register(VRaptor3BasedConverter.class);
     	mockery.assertIsSatisfied();
+    }
     
     @Test
     public void existsForWillReturnTrueIfAVraptor2ConverterExistsForTheType() throws Exception {
