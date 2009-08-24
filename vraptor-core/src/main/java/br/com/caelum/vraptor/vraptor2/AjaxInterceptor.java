@@ -37,8 +37,8 @@ import org.vraptor.annotations.Viewless;
 import org.vraptor.remote.json.JSONSerializer;
 
 import br.com.caelum.vraptor.InterceptionException;
-import br.com.caelum.vraptor.interceptor.Interceptor;
 import br.com.caelum.vraptor.core.InterceptorStack;
+import br.com.caelum.vraptor.interceptor.Interceptor;
 import br.com.caelum.vraptor.resource.ResourceMethod;
 import br.com.caelum.vraptor.vraptor2.outject.JsonOutjecter;
 

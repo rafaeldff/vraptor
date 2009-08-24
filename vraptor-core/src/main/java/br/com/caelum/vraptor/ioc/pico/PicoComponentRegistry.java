@@ -42,9 +42,9 @@ import org.picocontainer.monitors.NullComponentMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import br.com.caelum.vraptor.ComponentRegistry;
 import br.com.caelum.vraptor.core.RequestInfo;
 import br.com.caelum.vraptor.http.route.Router;
+import br.com.caelum.vraptor.ioc.AbstractComponentRegistry;
 import br.com.caelum.vraptor.ioc.ApplicationScoped;
 import br.com.caelum.vraptor.ioc.ComponentFactory;
 import br.com.caelum.vraptor.ioc.ComponentFactoryIntrospector;
@@ -59,7 +59,7 @@ import br.com.caelum.vraptor.ioc.SessionScoped;
  * @author Adriano Almeida
  * @author Sérgio Lopes
  */
-public class PicoComponentRegistry implements ComponentRegistry {
+public class PicoComponentRegistry extends AbstractComponentRegistry {
 
     public static final String CONTAINER_SESSION_KEY = PicoComponentRegistry.class.getName() + ".session";
 
@@ -68,7 +68,7 @@ public class PicoComponentRegistry implements ComponentRegistry {
     private final Map<Class<?>, Class<?>> applicationScoped = new HashMap<Class<?>, Class<?>>();
     private final Map<Class<?>, Class<?>> sessionScoped = new HashMap<Class<?>, Class<?>>();
     private final Map<Class<?>, Class<?>> requestScoped = new HashMap<Class<?>, Class<?>>();
-    private final MutablePicoContainer appContainer;
+    private MutablePicoContainer appContainer;
     private boolean initialized = false;
 
     private final ComponentFactoryRegistry componentFactoryRegistry;
@@ -76,6 +76,11 @@ public class PicoComponentRegistry implements ComponentRegistry {
     public PicoComponentRegistry(MutablePicoContainer container, ComponentFactoryRegistry componentFactoryRegistry) {
         this.appContainer = container;
         this.componentFactoryRegistry = componentFactoryRegistry;
+    }
+
+    MutablePicoContainer makeChildContainer() {
+    	this.appContainer = appContainer.makeChildContainer();
+    	return appContainer;
     }
 
     @SuppressWarnings("unchecked")
@@ -133,7 +138,7 @@ public class PicoComponentRegistry implements ComponentRegistry {
             this.appContainer.addComponent(entry.getKey(), entry.getValue());
         }
 
-        registerComponentFactories(appContainer, componentFactoryRegistry.getApplicationScopedComponentFactoryMap());
+        registerComponentFactories(appContainer, componentFactoryRegistry.getApplicationMap());
 
         logger.debug("Session components to initialize: " + sessionScoped.keySet());
         logger.debug("Requets components to initialize: " + requestScoped.keySet());
@@ -159,7 +164,7 @@ public class PicoComponentRegistry implements ComponentRegistry {
         }
         requestContainer.addComponent(request).addComponent(request.getRequest()).addComponent(request.getResponse());
 
-        registerComponentFactories(requestContainer, componentFactoryRegistry.getRequestScopedComponentFactoryMap());
+        registerComponentFactories(requestContainer, componentFactoryRegistry.getRequestMap());
 
         return new PicoBasedContainer(requestContainer, this.appContainer.getComponent(Router.class));
     }
@@ -184,12 +189,12 @@ public class PicoComponentRegistry implements ComponentRegistry {
         if (logger.isDebugEnabled()) {
             logger.debug("Session components are " + sessionScoped);
         }
-        
+
         for (Map.Entry<Class<?>, Class<?>> entry : sessionScoped.entrySet()) {
             sessionContainer.addComponent(entry.getKey(), entry.getValue());
         }
 
-        registerComponentFactories(sessionContainer, componentFactoryRegistry.getSessionScopedComponentFactoryMap());
+        registerComponentFactories(sessionContainer, componentFactoryRegistry.getSessionMap());
 
         sessionContainer.start();
         return sessionContainer;

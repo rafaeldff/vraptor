@@ -90,8 +90,9 @@ import br.com.caelum.vraptor.ioc.ConverterHandler;
 import br.com.caelum.vraptor.ioc.InterceptorStereotypeHandler;
 import br.com.caelum.vraptor.ioc.ResourceHandler;
 import br.com.caelum.vraptor.ioc.StereotypeHandler;
-import br.com.caelum.vraptor.proxy.DefaultProxifier;
+import br.com.caelum.vraptor.proxy.ObjenesisProxifier;
 import br.com.caelum.vraptor.proxy.Proxifier;
+import br.com.caelum.vraptor.reflection.CacheBasedTypeCreator;
 import br.com.caelum.vraptor.resource.DefaultResourceNotFoundHandler;
 import br.com.caelum.vraptor.resource.ResourceNotFoundHandler;
 import br.com.caelum.vraptor.validator.DefaultValidator;
@@ -114,43 +115,47 @@ import br.com.caelum.vraptor.view.PathResolver;
 public class BaseComponents {
 
     private final static Map<Class<?>, Class<?>> APPLICATION_COMPONENTS = classMap(
-            UrlToResourceTranslator.class, DefaultResourceTranslator.class,
-            Router.class, DefaultRouter.class,
-            ResourceNotFoundHandler.class, DefaultResourceNotFoundHandler.class,
-            InterceptorRegistry.class, DefaultInterceptorRegistry.class,
-            ParameterNameProvider.class, ParanamerNameProvider.class,
-            Converters.class, DefaultConverters.class,
-            RoutesConfiguration.class, NoRoutesConfiguration.class,
-            RoutesParser.class, PathAnnotationRoutesParser.class,
-            Proxifier.class, DefaultProxifier.class,
-            MultipartConfig.class, DefaultMultipartConfig.class,
-            TypeCreator.class, AsmBasedTypeCreator.class,
-            EmptyElementsRemoval.class, EmptyElementsRemoval.class,
-            AcceptHeaderToFormat.class, DefaultAcceptHeaderToFormat.class
+    		TypeCreator.class, 				AsmBasedTypeCreator.class,
+    		AcceptHeaderToFormat.class, 	DefaultAcceptHeaderToFormat.class,
+    		Converters.class, 				DefaultConverters.class,
+            InterceptorRegistry.class, 		DefaultInterceptorRegistry.class,
+            MultipartConfig.class, 			DefaultMultipartConfig.class,
+            UrlToResourceTranslator.class, 	DefaultResourceTranslator.class,
+            Router.class, 					DefaultRouter.class,
+            ResourceNotFoundHandler.class, 	DefaultResourceNotFoundHandler.class,
+            EmptyElementsRemoval.class, 	EmptyElementsRemoval.class,
+            RoutesConfiguration.class, 		NoRoutesConfiguration.class,
+            Proxifier.class, 				ObjenesisProxifier.class,
+            ParameterNameProvider.class, 	ParanamerNameProvider.class,
+            RoutesParser.class, 			PathAnnotationRoutesParser.class
+    );
+
+    private final static Map<Class<?>, Class<?>> CACHED_COMPONENTS = classMap(
+    		TypeCreator.class, CacheBasedTypeCreator.class
     );
 
     private static final Map<Class<?>, Class<?>> REQUEST_COMPONENTS = classMap(
-            PathResolver.class, DefaultPathResolver.class,
-            MethodInfo.class, DefaultMethodInfo.class,
-            InterceptorStack.class, DefaultInterceptorStack.class,
-            RequestExecution.class, DefaultRequestExecution.class,
-            Result.class, DefaultResult.class,
-            ParametersProvider.class, OgnlParametersProvider.class,
-            Validator.class, DefaultValidator.class,
-            Localization.class, JstlLocalization.class,
-            ForwardToDefaultViewInterceptor.class, ForwardToDefaultViewInterceptor.class,
-            LogicResult.class, DefaultLogicResult.class,
-            PageResult.class, DefaultPageResult.class,
-            EmptyResult.class, EmptyResult.class,
-            OutjectResult.class, OutjectResult.class,
-            ParametersInstantiatorInterceptor.class, ParametersInstantiatorInterceptor.class,
+            InterceptorStack.class, 						DefaultInterceptorStack.class,
+            MethodInfo.class, 								DefaultMethodInfo.class,
+            LogicResult.class, 								DefaultLogicResult.class,
+            PageResult.class, 								DefaultPageResult.class,
+            PathResolver.class, 							DefaultPathResolver.class,
+            RequestExecution.class, 						DefaultRequestExecution.class,
+            Result.class, 									DefaultResult.class,
+            Validator.class, 								DefaultValidator.class,
+            DownloadInterceptor.class, 						DownloadInterceptor.class,
+            EmptyResult.class, 								EmptyResult.class,
+            ExecuteMethodInterceptor.class, 				ExecuteMethodInterceptor.class,
+            ForwardToDefaultViewInterceptor.class, 			ForwardToDefaultViewInterceptor.class,
+            InstantiateInterceptor.class, 					InstantiateInterceptor.class,
             InterceptorListPriorToExecutionExtractor.class, InterceptorListPriorToExecutionExtractor.class,
-            DownloadInterceptor.class, DownloadInterceptor.class,
-            MultipartInterceptor.class, MultipartInterceptor.class,
-            URLParameterExtractorInterceptor.class, URLParameterExtractorInterceptor.class,
-            ResourceLookupInterceptor.class, ResourceLookupInterceptor.class,
-            InstantiateInterceptor.class, InstantiateInterceptor.class,
-            ExecuteMethodInterceptor.class, ExecuteMethodInterceptor.class
+            Localization.class, 							JstlLocalization.class,
+            MultipartInterceptor.class, 					MultipartInterceptor.class,
+            ParametersProvider.class, 						OgnlParametersProvider.class,
+            OutjectResult.class, 							OutjectResult.class,
+            ParametersInstantiatorInterceptor.class, 		ParametersInstantiatorInterceptor.class,
+            ResourceLookupInterceptor.class, 				ResourceLookupInterceptor.class,
+            URLParameterExtractorInterceptor.class, 		URLParameterExtractorInterceptor.class
     );
 
     @SuppressWarnings("unchecked")
@@ -162,20 +167,24 @@ public class BaseComponents {
             LocaleBasedCalendarConverter.class, LocaleBasedDateConverter.class, EnumConverter.class,
             UploadedFileConverter.class};
 
-    
+
     @SuppressWarnings("unchecked")
 	private static final Class<? extends StereotypeHandler>[] STEREOTYPE_HANDLERS = new Class[] {
 		ResourceHandler.class,
 		ConverterHandler.class,
 		InterceptorStereotypeHandler.class,
 	};
-    
+
     @SuppressWarnings("unchecked")
     private static final Class<? extends Annotation>[] STEREOTYPES = new Class[] {
     	Resource.class,
     	Convert.class,
     	Component.class
     };
+
+    public static Map<Class<?>, Class<?>> getCachedComponents() {
+		return CACHED_COMPONENTS;
+	}
 
     public static Map<Class<?>, Class<?>> getApplicationScoped() {
         return APPLICATION_COMPONENTS;
@@ -188,11 +197,11 @@ public class BaseComponents {
     public static Class<? extends Converter<?>>[] getBundledConverters() {
         return BUNDLED_CONVERTERS;
     }
-    
+
     public static Class<? extends Annotation>[] getStereotypes() {
     	return STEREOTYPES;
     }
-    
+
     public static Class<? extends StereotypeHandler>[] getStereotypeHandlers() {
     	return STEREOTYPE_HANDLERS;
     }
