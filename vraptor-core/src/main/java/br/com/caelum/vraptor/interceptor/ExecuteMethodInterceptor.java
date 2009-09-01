@@ -32,6 +32,9 @@ package br.com.caelum.vraptor.interceptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import br.com.caelum.vraptor.InterceptionException;
 import br.com.caelum.vraptor.core.InterceptorStack;
 import br.com.caelum.vraptor.core.MethodInfo;
@@ -44,8 +47,8 @@ import br.com.caelum.vraptor.validator.ValidationError;
  * @author Guilherme Silveira
  */
 public class ExecuteMethodInterceptor implements Interceptor {
-
     private final MethodInfo info;
+	private static final Logger logger = LoggerFactory.getLogger(ExecuteMethodInterceptor.class);
 
 	public ExecuteMethodInterceptor(MethodInfo info) {
 		this.info = info;
@@ -54,6 +57,9 @@ public class ExecuteMethodInterceptor implements Interceptor {
     public void intercept(InterceptorStack stack, ResourceMethod method, Object resourceInstance)
             throws InterceptionException {
         try {
+        	if (logger.isDebugEnabled()) {
+        		logger.debug("About to invoke method " + method);
+        	}
             Method reflectionMethod = method.getMethod();
             Object[] parameters = this.info.getParameters();
             Object result = reflectionMethod.invoke(resourceInstance, parameters);
